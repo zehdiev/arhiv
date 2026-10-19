@@ -1,7 +1,7 @@
 // Офлайн режим.
 // Файловете на приложението: първо мрежата (за да идват новите факти), при липса на интернет се ползва запазеното копие.
 // Шрифтовете: първо запазеното копие.
-const CACHE = "arhivat-v2";
+const CACHE = "arhivat-v3";
 const FILES = ["./", "index.html", "data.json", "manifest.webmanifest", "icon.svg", "icon-192.png", "icon-512.png"];
 const FONT_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 

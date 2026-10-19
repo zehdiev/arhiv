@@ -89,6 +89,7 @@ h2{font-family:var(--display);font-weight:800;font-size:clamp(28px,6.4vw,46px);l
 .tools{display:flex;gap:6px;align-items:center}
 .icon{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;cursor:pointer;padding:0}
 .icon svg{width:17px;height:17px}
+.icon[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
 .icon.accent{background:var(--accent);border-color:var(--accent);color:var(--bg)}
 .offline{font:500 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--t-history);border:1px solid currentColor;border-radius:4px;padding:1px 6px}
 dialog{border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--ink);padding:20px;max-width:min(380px,calc(100vw - 32px));box-shadow:0 20px 60px rgba(0,0,0,.25)}
@@ -98,19 +99,20 @@ dialog ol{margin:0 0 16px;padding-left:20px;line-height:1.6}
 dialog .row{display:flex;justify-content:flex-end}
 .btn{font:500 14px var(--body);border:0;border-radius:999px;padding:9px 18px;background:var(--ink);color:var(--bg);cursor:pointer}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);font:500 13px var(--body);padding:9px 16px;border-radius:999px;z-index:20;pointer-events:none}
-@media (max-width:480px){.brand small{display:none}.text{font-size:16px}.tabs button{padding:6px 10px}.brand{font-size:18px}}
+@media (max-width:480px){.brand small{display:none}.brand .long{display:none}.brand{white-space:nowrap}.text{font-size:16px}.tabs button{padding:6px 10px}.brand{font-size:18px}}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
     <div class="top">
-      <div class="brand">Архивът на рафта <small id="stat">зареждане…</small></div>
+      <div class="brand"><span>Архивът<span class="long"> на рафта</span></span> <small id="stat">зареждане…</small></div>
       <div class="tools">
       <div class="tabs" role="group" aria-label="Изглед">
         <button id="tabAll" aria-pressed="true">Всички</button>
         <button id="tabFav" aria-pressed="false">Любими</button>
       </div>
+      <button class="icon" id="wakeBtn" type="button" aria-pressed="false" aria-label="Дръж екрана включен" title="Дръж екрана включен" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button class="icon" id="themeBtn" type="button" aria-label="Тема"></button>
       <button class="icon accent" id="installBtn" type="button" aria-label="Инсталирай приложението" title="Инсталирай" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button>
       </div>
@@ -314,6 +316,27 @@ $("installBtn").onclick=async()=>{
   $("installDlg").showModal();
 };
 $("installClose").onclick=()=>$("installDlg").close();
+
+// екранът остава включен
+let wakeOn=false,wakeLock=null;
+try{wakeOn=localStorage.getItem("arch.wake")==="1"}catch(e){}
+async function lockScreen(){
+  if(!wakeOn||document.visibilityState!=="visible"||wakeLock)return;
+  try{wakeLock=await navigator.wakeLock.request("screen");wakeLock.addEventListener("release",()=>{wakeLock=null})}
+  catch(e){wakeOn=false;showWake();toast("Устройството не позволи екранът да остане включен")}
+}
+function showWake(){const b=$("wakeBtn");b.setAttribute("aria-pressed",wakeOn);const l=wakeOn?"Екранът остава включен":"Дръж екрана включен";b.title=l;b.setAttribute("aria-label",l)}
+if("wakeLock" in navigator){
+  $("wakeBtn").hidden=false;showWake();
+  $("wakeBtn").onclick=async()=>{
+    wakeOn=!wakeOn;try{localStorage.setItem("arch.wake",wakeOn?"1":"0")}catch(e){}
+    showWake();
+    if(wakeOn){await lockScreen();if(wakeOn)toast("Екранът ще остане включен")}
+    else{try{await wakeLock?.release()}catch(e){}wakeLock=null;toast("Екранът ще изгасва нормално")}
+  };
+  document.addEventListener("visibilitychange",lockScreen);
+  lockScreen();
+}
 
 // офлайн
 addEventListener("online",()=>{updateStat();toast("Отново онлайн")});
