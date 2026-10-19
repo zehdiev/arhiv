@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Архивът на рафта</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;700;800&family=Golos+Text:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<meta name="description" content="Лента с интересни факти от списанията у дома.">
+<meta name="theme-color" content="#E9ECE4" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0E1412" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Архивът">
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+/* Layout: one-screen app — slim header with filters, then a vertical snap feed of full-height field cards */
+:root{
+  --bg:#E9ECE4; --surface:#F6F7F2; --ink:#18211D; --muted:#5B665F; --line:#C9CFC4; --accent:#1F6B52;
+  --t-animals:#B4572A; --t-nature:#3C7A3A; --t-space:#3D4FA0; --t-history:#8A5A1F; --t-people:#A0386A;
+  --t-earth:#2C7F8C; --t-ocean:#1D5E96; --t-science:#6B4BA8; --t-tech:#5A6470;
+  --display:"Alegreya",Georgia,"Times New Roman",serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1412; --surface:#151D1A; --ink:#E6ECE6; --muted:#93A099; --line:#2A3531; --accent:#5FC39C;
+  --t-animals:#E58A5C; --t-nature:#7DC170; --t-space:#8E9CF0; --t-history:#D6A35C; --t-people:#E57BAE;
+  --t-earth:#62C2CF; --t-ocean:#6AAEE8; --t-science:#B394F0; --t-tech:#A5AFB9; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#151D1A; --ink:#E6ECE6; --muted:#93A099; --line:#2A3531; --accent:#5FC39C;
+  --t-animals:#E58A5C; --t-nature:#7DC170; --t-space:#8E9CF0; --t-history:#D6A35C; --t-people:#E57BAE;
+  --t-earth:#62C2CF; --t-ocean:#6AAEE8; --t-science:#B394F0; --t-tech:#A5AFB9; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column}
+header{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:10px;background:var(--bg)}
+.top{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.brand{font-family:var(--display);font-weight:800;font-size:20px;letter-spacing:.2px;display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand small{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--muted);white-space:nowrap}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.tabs button{border:0;background:none;color:var(--muted);font:500 13px var(--body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.filters{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,.toggle,.ghost{font:500 13px var(--body);color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;cursor:pointer}
+select{max-width:46vw}
+.toggle[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.progress{margin-left:auto;font:400 12px var(--mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.feed{flex:1;min-height:0;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain}
+.card{height:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;justify-content:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px}
+.sheet{--tc:var(--accent);width:100%;max-width:640px;display:flex;flex-direction:column;gap:18px;justify-content:center;position:relative;min-width:0}
+.meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font:500 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.topic{color:var(--tc);display:inline-flex;align-items:center;gap:7px}
+.topic::before{content:"";width:9px;height:9px;border-radius:2px;background:var(--tc)}
+.kind{border:1px solid var(--line);padding:2px 7px;border-radius:4px}
+h2{font-family:var(--display);font-weight:800;font-size:clamp(28px,6.4vw,46px);line-height:1.05;margin:0;text-wrap:balance}
+.num{font-family:var(--display);font-weight:700;color:var(--tc)}
+.text{font-size:17px;line-height:1.6;margin:0;max-width:62ch;color:var(--ink)}
+.source{border-top:1px solid var(--line);padding-top:12px;display:flex;gap:6px 14px;flex-wrap:wrap;font:400 12px var(--mono);color:var(--muted)}
+.source b{font-weight:500;color:var(--ink)}
+.actions{display:flex;gap:10px;align-items:center}
+.act{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 13px var(--body);padding:8px 14px;border-radius:999px;cursor:pointer}
+.act svg{width:16px;height:16px}
+.act[aria-pressed="true"].fav{color:var(--t-people);border-color:var(--t-people)}
+.act[aria-pressed="true"].fav svg path{fill:currentColor}
+.readmark{font:400 12px var(--mono);color:var(--muted);margin-left:auto}
+.hint{font:400 11px var(--mono);color:var(--muted);text-align:center;opacity:.8}
+.empty .sheet{gap:14px}
+.empty h2{font-size:clamp(26px,5.6vw,38px)}
+.steps{display:grid;gap:10px;margin:0;padding:0;list-style:none;counter-reset:s}
+.steps li{display:grid;grid-template-columns:28px 1fr;gap:10px;line-height:1.5;counter-increment:s}
+.steps li::before{content:counter(s);font:500 12px var(--mono);border:1px solid var(--line);border-radius:6px;height:24px;display:grid;place-items:center;color:var(--accent)}
+.sample{border:1px dashed var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;background:var(--surface)}
+.sample .meta{font-size:10px}
+.sample p{margin:0;line-height:1.5}
+.sample strong{font-family:var(--display);font-size:19px}
+@media (prefers-reduced-motion:no-preference){.feed{scroll-behavior:smooth}.sheet{animation:rise .4s ease both}}
+@keyframes rise{from{transform:translateY(8px)}to{transform:none}}
+@media (max-width:480px){.brand small{display:none}.text{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="top">
+      <div class="brand">Архивът на рафта <small id="stat">зареждане…</small></div>
+      <div class="tabs" role="group" aria-label="Изглед">
+        <button id="tabAll" aria-pressed="true">Всички</button>
+        <button id="tabFav" aria-pressed="false">Любими</button>
+      </div>
+    </div>
+    <div class="filters">
+      <select id="fMag" aria-label="Списание"><option value="">Всички списания</option></select>
+      <select id="fTopic" aria-label="Тема"><option value="">Всички теми</option></select>
+      <select id="fIssue" aria-label="Брой"><option value="">Всички броеве</option></select>
+      <button class="toggle" id="fHideRead" aria-pressed="false">Скрий прочетените</button>
+      <button class="ghost" id="shuffle">Разбъркай</button>
+      <span class="progress" id="pos"></span>
+    </div>
+  </header>
+  <main class="feed" id="feed" tabindex="0" aria-label="Факти"></main>
+</div>
+
+<script>
+const TOPICS={animals:"Животни",nature:"Природа",ocean:"Океани",earth:"Земя и климат",space:"Космос",history:"История",people:"Хора и култури",science:"Наука",tech:"Технологии"};
+const S={facts:[],issues:{},fav:new Set(),read:new Set(),view:"all",mag:"",topic:"",issue:"",hideRead:false,order:null,list:[],loaded:false};
+const $=id=>document.getElementById(id);
+const feed=$("feed");
+try{const p=JSON.parse(localStorage.getItem("arch.prefs")||"{}");Object.assign(S,{mag:p.mag||"",topic:p.topic||"",issue:p.issue||"",hideRead:!!p.hideRead})}catch(e){}
+function savePrefs(){try{localStorage.setItem("arch.prefs",JSON.stringify({mag:S.mag,topic:S.topic,issue:S.issue,hideRead:S.hideRead}))}catch(e){}}
+
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const heart='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-9.3-9.2C1.5 8 3.6 4.5 7.1 4.5c2 0 3.6 1.1 4.9 2.8 1.3-1.7 2.9-2.8 4.9-2.8 3.5 0 5.6 3.5 4.4 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
+
+function issueLabel(id){const i=S.issues[id];return i?i.label:id||"—"}
+function magOf(f){return f.magazine||(S.issues[f.issue]||{}).magazine||""}
+function issueSort(a,b){const A=S.issues[a]||{},B=S.issues[b]||{};return ((B.year||0)-(A.year||0))||((B.month||0)-(A.month||0))||String(a).localeCompare(b)}
+
+function shuffleOrder(){const ids=S.facts.map(f=>f.id);for(let i=ids.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}S.order=ids}
+
+function computeList(){
+  if(!S.order||S.order.length!==S.facts.length)shuffleOrder();
+  const byId=Object.fromEntries(S.facts.map(f=>[f.id,f]));
+  S.list=S.order.map(id=>byId[id]).filter(f=>f&&
+    (S.view!=="fav"||S.fav.has(f.id))&&
+    (!S.mag||magOf(f)===S.mag)&&
+    (!S.topic||f.topic===S.topic)&&
+    (!S.issue||f.issue===S.issue)&&
+    (!S.hideRead||S.view==="fav"||!S.read.has(f.id)));
+}
+
+function factCard(f,i){
+  const tc=TOPICS[f.topic]?`var(--t-${f.topic})`:"var(--accent)";
+  const fav=S.fav.has(f.id);
+  return `<section class="card" data-id="${esc(f.id)}" data-i="${i}"><div class="sheet" style="--tc:${tc}">
+    <div class="meta"><span class="topic">${esc(TOPICS[f.topic]||f.topic||"Факт")}</span>${f.kind?`<span class="kind">${esc(f.kind)}</span>`:""}</div>
+    <h2>${esc(f.title)}</h2>
+    <p class="text">${esc(f.text)}</p>
+    <div class="source">${magOf(f)?`<span>Списание: <b>${esc(magOf(f))}</b></span>`:""}<span>Брой: <b>${esc(issueLabel(f.issue))}</b></span>${f.article?`<span>Статия: <b>${esc(f.article)}</b></span>`:""}${f.page?`<span>стр. ${esc(f.page)}</span>`:""}</div>
+    <div class="actions">
+      <button class="act fav" data-fav="${esc(f.id)}" aria-pressed="${fav}">${heart}<span>${fav?"В любими":"Любим"}</span></button>
+      <span class="readmark">${S.read.has(f.id)?"прочетено":""}</span>
+    </div>
+    ${i===0?'<div class="hint">Скролни надолу за следващия факт · ↑ ↓ от клавиатурата</div>':""}
+  </div></section>`;
+}
+
+function emptyCard(kind){
+  if(kind==="loading") return `<section class="card empty"><div class="sheet"><div class="meta"><span class="topic">Зареждане</span></div><h2>Вадя списанията от рафта…</h2></div></section>`;
+  if(kind==="nodb") return `<section class="card empty"><div class="sheet"><div class="meta"><span class="topic">Няма връзка</span></div><h2>Не успях да заредя фактите.</h2><p class="text">Провери интернета и опитай пак. Ако отваряш файла директно от компютъра, качи го в GitHub Pages или пусни локален сървър: браузърът не позволява четене на data.json от file://.</p></div></section>`;
+  if(kind==="filtered") return `<section class="card empty"><div class="sheet"><div class="meta"><span class="topic">Нищо тук</span></div><h2>${S.view==="fav"?"Още нямаш любими факти.":"Няма факти за този филтър."}</h2><p class="text">${S.view==="fav"?"Натисни „Любим“ под някой факт и той ще се появи тук.":S.hideRead?"Може би вече си прочел всичко оттук. Изключи „Скрий прочетените“ или смени темата и броя.":"Смени темата или броя от менютата горе."}</p></div></section>`;
+  return `<section class="card empty"><div class="sheet">
+    <div class="meta"><span class="topic">Рафтът е празен</span></div>
+    <h2>Тук ще се появят фактите от твоите списания.</h2>
+    <ol class="steps">
+      <li>Добави броеве и факти във файла data.json.</li>
+      <li>Качи новия data.json в GitHub.</li>
+      <li>Презареди приложението: новите факти се появяват тук.</li>
+    </ol>
+    <div class="sample"><div class="meta"><span class="topic" style="--tc:var(--t-animals);color:var(--t-animals)">Животни</span><span class="kind">Пример</span></div>
+      <strong>Така ще изглежда една карта</strong>
+      <p>Заглавие с най-интересното, 2–4 изречения обяснение на български и откъде е фактът: списание, брой, статия, страница.</p></div>
+  </div></section>`;
+}
+
+let io=null,readTimers=new Map();
+function render(keepId){
+  computeList();
+  let html;
+  if(!S.loaded) html=emptyCard("loading");
+  else if(S.error) html=emptyCard("nodb");
+  else if(!S.facts.length) html=emptyCard("first");
+  else if(!S.list.length) html=emptyCard("filtered");
+  else html=S.list.map(factCard).join("");
+  feed.innerHTML=html;
+  if(keepId){const el=feed.querySelector(`[data-id="${CSS.escape(keepId)}"]`);if(el)feed.scrollTop=el.offsetTop-feed.offsetTop}
+  else feed.scrollTop=0;
+  observe();updateStat();
+}
+
+function currentId(){const h=feed.clientHeight||1;const i=Math.round(feed.scrollTop/h);const c=feed.children[i];return c&&c.dataset.id}
+
+function observe(){
+  if(io)io.disconnect();readTimers.forEach(clearTimeout);readTimers.clear();
+  io=new IntersectionObserver(es=>{es.forEach(e=>{const id=e.target.dataset.id;if(!id)return;
+    if(e.isIntersecting&&e.intersectionRatio>.6){
+      $("pos").textContent=`${+e.target.dataset.i+1} / ${S.list.length}`;
+      if(!S.read.has(id)&&!readTimers.has(id))readTimers.set(id,setTimeout(()=>{readTimers.delete(id);markRead(id,e.target)},1800));
+    }else if(readTimers.has(id)){clearTimeout(readTimers.get(id));readTimers.delete(id)}
+  })},{root:feed,threshold:[0,.6,1]});
+  feed.querySelectorAll(".card[data-id]").forEach(c=>io.observe(c));
+  if(!S.list.length||!S.facts.length)$("pos").textContent="";
+}
+
+function markRead(id,el){S.read.add(id);const m=el.querySelector(".readmark");if(m)m.textContent="прочетено";queueSave();updateStat()}
+
+function updateStat(){
+  const n=S.facts.length,r=S.facts.filter(f=>S.read.has(f.id)).length,iss=Object.keys(S.issues).length||new Set(S.facts.map(f=>f.issue)).size;
+  const mc=new Set(S.facts.map(magOf).filter(Boolean)).size;
+  $("stat").textContent=n?`${mc>1?mc+" списания · ":""}${iss} бр. · ${n} факта · прочетени ${r}`:"още няма броеве";
+}
+
+// любими и прочетени се пазят в този браузър
+function loadState(){try{const d=JSON.parse(localStorage.getItem("arch.state")||"{}");S.fav=new Set(d.fav||[]);S.read=new Set(d.read||[])}catch(e){}}
+let saveTimer=null;
+function queueSave(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem("arch.state",JSON.stringify({fav:[...S.fav],read:[...S.read]}))}catch(e){}},400)}
+
+function fillSelects(){
+  const t=$("fTopic"),is=$("fIssue"),mg=$("fMag");
+  const mags=[...new Set(S.facts.map(magOf).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"bg"));
+  mg.innerHTML='<option value="">Всички списания</option>'+mags.map(m=>`<option value="${esc(m)}">${esc(m)} (${S.facts.filter(f=>magOf(f)===m).length})</option>`).join("");
+  mg.hidden=mags.length<2;
+  if(S.mag&&!mags.includes(S.mag))S.mag="";
+  mg.value=S.mag;
+  const usedT=[...new Set(S.facts.map(f=>f.topic))];
+  t.innerHTML='<option value="">Всички теми</option>'+Object.keys(TOPICS).filter(k=>usedT.includes(k)).map(k=>`<option value="${k}">${TOPICS[k]}</option>`).join("");
+  const ids=[...new Set([...Object.keys(S.issues),...S.facts.map(f=>f.issue)])].filter(Boolean).filter(id=>!S.mag||((S.issues[id]||{}).magazine||(S.facts.find(f=>f.issue===id)||{}).magazine)===S.mag).sort(issueSort);
+  is.innerHTML='<option value="">Всички броеве</option>'+ids.map(id=>{const c=S.facts.filter(f=>f.issue===id).length;const m=(S.issues[id]||{}).magazine;return `<option value="${esc(id)}">${!S.mag&&m&&mags.length>1?esc(m)+" · ":""}${esc(issueLabel(id))} (${c})</option>`}).join("");
+  if(S.topic&&!usedT.includes(S.topic))S.topic="";
+  if(S.issue&&!ids.includes(S.issue))S.issue="";
+  t.value=S.topic;is.value=S.issue;
+}
+
+feed.addEventListener("click",e=>{const b=e.target.closest("[data-fav]");if(!b)return;const id=b.dataset.fav;
+  if(S.fav.has(id))S.fav.delete(id);else S.fav.add(id);
+  const on=S.fav.has(id);b.setAttribute("aria-pressed",on);b.querySelector("span").textContent=on?"В любими":"Любим";queueSave()});
+$("fMag").onchange=e=>{S.mag=e.target.value;S.issue="";savePrefs();fillSelects();render()};
+$("fTopic").onchange=e=>{S.topic=e.target.value;savePrefs();render()};
+$("fIssue").onchange=e=>{S.issue=e.target.value;savePrefs();render()};
+$("fHideRead").onclick=e=>{S.hideRead=!S.hideRead;e.currentTarget.setAttribute("aria-pressed",S.hideRead);savePrefs();render()};
+$("shuffle").onclick=()=>{shuffleOrder();render()};
+function setView(v){S.view=v;$("tabAll").setAttribute("aria-pressed",v==="all");$("tabFav").setAttribute("aria-pressed",v==="fav");render()}
+$("tabAll").onclick=()=>setView("all");$("tabFav").onclick=()=>setView("fav");
+document.addEventListener("keydown",e=>{if(e.target.tagName==="SELECT")return;const h=feed.clientHeight;
+  if(e.key==="ArrowDown"||e.key==="j"){e.preventDefault();feed.scrollBy({top:h})}
+  if(e.key==="ArrowUp"||e.key==="k"){e.preventDefault();feed.scrollBy({top:-h})}});
+$("fHideRead").setAttribute("aria-pressed",S.hideRead);
+
+loadState();
+render();
+(async()=>{
+  try{
+    const r=await fetch("data.json",{cache:"no-cache"});
+    if(!r.ok)throw new Error(r.status);
+    const d=await r.json();
+    S.issues=d.issues||{};S.facts=(d.facts||[]).filter(f=>f&&f.id);
+  }catch(e){S.error=true}
+  S.loaded=true;S.order=null;fillSelects();render();
+})();
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
